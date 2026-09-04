@@ -1,18 +1,25 @@
 from pydantic import BaseModel, ConfigDict
 
-class UserBase(BaseModel):
+class UserCreate(BaseModel):
     username: str
-    password_hash: str
-    role: str
+    password: str
+    role: str = "Cashier"
 
-class UserCreate(UserBase):
-    pass
 
 class UserUpdate(BaseModel):
     username: str | None = None
-    password_hash: str | None = None
+    password: str | None = None
     role: str | None = None
 
-class UserRead(UserBase):
+
+class UserRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
+
     id: int
+    username: str
+    role: str
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str

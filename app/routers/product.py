@@ -2,9 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from schemas.product import ProductCreate, ProductRead, ProductUpdate
 from sqlalchemy.orm import Session
 from database import get_db
+from dependencies import get_current_user
 from services import product_service
 
-router = APIRouter(prefix="/products", tags=["products"])
+router = APIRouter(prefix="/products", tags=["products"], dependencies=[Depends(get_current_user)])
 
 @router.get("/", response_model=list[ProductRead])
 def list_products(db: Session = Depends(get_db)):

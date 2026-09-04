@@ -2,11 +2,11 @@ from fastapi import APIRouter
 from schemas import UserCreate, UserRead, UserUpdate
 from sqlalchemy.orm import Session
 from database import get_db
+from dependencies import get_current_user
 from services import user_service
 from fastapi import Depends
-from fastapi import HTTPException
 
-router = APIRouter(prefix="/users", tags=["users"])
+router = APIRouter(prefix="/users", tags=["users"], dependencies=[Depends(get_current_user)])
 
 @router.get("/", response_model=list[UserRead])
 def list_users(db: Session = Depends(get_db)):

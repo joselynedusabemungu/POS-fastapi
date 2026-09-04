@@ -2,11 +2,11 @@ from fastapi import APIRouter
 from schemas import PaymentCreate, PaymentRead, PaymentUpdate
 from sqlalchemy.orm import Session
 from database import get_db
+from dependencies import get_current_user
 from services import payment_service
 from fastapi import Depends
-from fastapi import HTTPException
 
-router = APIRouter(prefix="/payments", tags=["payments"])
+router = APIRouter(prefix="/payments", tags=["payments"], dependencies=[Depends(get_current_user)])
 
 @router.get("/", response_model=list[PaymentRead])
 def list_payments(db: Session = Depends(get_db)):

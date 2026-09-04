@@ -10,7 +10,6 @@ def get_supplier(db:Session, supplier_id:int):
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Supplier not found")
     return supplier
 
-
 def list_supplier(db: Session):
     return supplier_repository.get_all(db)
 

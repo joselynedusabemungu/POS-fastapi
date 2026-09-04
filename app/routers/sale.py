@@ -2,11 +2,11 @@ from fastapi import APIRouter
 from schemas import SaleCreate, SaleRead, SaleUpdate
 from sqlalchemy.orm import Session
 from database import get_db
+from dependencies import get_current_user
 from services import sale_service
 from fastapi import Depends
-from fastapi import HTTPException
 
-router = APIRouter(prefix="/sales", tags=["sales"])
+router = APIRouter(prefix="/sales", tags=["sales"], dependencies=[Depends(get_current_user)])
 
 @router.get("/", response_model=list[SaleRead])
 def list_sales(db: Session = Depends(get_db)):

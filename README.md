@@ -1,51 +1,56 @@
 # POS (Point of Sale) API
 
-A REST API for a small-to-medium retail business, built with **FastAPI**, **SQLAlchemy**, and **PostgreSQL**. It manages inventory, customers, staff accounts, and sales transactions.
+A REST API for a small-to-medium retail business built with **FastAPI, SQLAlchemy, and PostgreSQL**. It manages inventory, customers, staff accounts, and sales.
 
 ## Features
 
-- **Inventory Management** — categories, suppliers, and products with stock/pricing data
-- **Sales Processing** — sales, line items (sale items), and payments, including support for multiple payment methods
-- **Customer Relationship Management** — customer contact records linked to purchase history
-- **User Access Control** — staff accounts with role-based access (Admin, Cashier)
-- **Receipts** — a unique receipt generated per sale
+* **Inventory Management** — categories, suppliers, products, stock, and pricing
+* **Sales Processing** — sales, sale items, and multiple payment methods
+* **Customer Management** — customer records linked to purchase history
+* **User Access Control** — staff accounts with Admin and Cashier roles
+* **Receipts** — unique receipt generated for each sale
+* **Authentication** — JWT-based authentication protecting API resources
 
 ## Entities & Relationships
 
-| Entity | Relationship |
-|---|---|
-| Category → Product | One-to-Many |
-| Supplier → Product | One-to-Many |
-| Customer → Sale | One-to-Many (customer is optional on a sale) |
-| User → Sale | One-to-Many |
-| Sale → SaleItem | One-to-Many |
-| Product → SaleItem | One-to-Many |
-| Sale → Payment | One-to-Many |
-| Sale → Receipt | One-to-One |
+| Entity             | Relationship |
+| ------------------ | ------------ |
+| Category → Product | One-to-Many  |
+| Supplier → Product | One-to-Many  |
+| Customer → Sale    | One-to-Many  |
+| User → Sale        | One-to-Many  |
+| Sale → SaleItem    | One-to-Many  |
+| Product → SaleItem | One-to-Many  |
+| Sale → Payment     | One-to-Many  |
+| Sale → Receipt     | One-to-One   |
 
-All relationships are enforced at the database level via SQLAlchemy foreign keys, and validated at the API level before insert/update — for example, creating a `SaleItem` with a `product_id` that doesn't exist returns a `404`, not a database error.
+Foreign keys are enforced at the database level and validated at the API level, returning clear errors such as `404 Not Found` for invalid references.
 
 ## Tech Stack
 
-- **FastAPI** — web framework and routing
-- **SQLAlchemy** — ORM and database layer
-- **Pydantic** — request/response validation
-- **PostgreSQL** — database
+* **FastAPI** — API framework and routing
+* **SQLAlchemy** — ORM and database layer
+* **Pydantic** — request/response validation
+* **PostgreSQL** — database
+* **JWT + pwdlib** — authentication and password hashing
 
 ## Project Structure
 
-```
+```text
 app/
-├── main.py                # App entrypoint, wires up all routers
-├── database.py             # Engine, session, and Base setup
-├── models/                 # SQLAlchemy ORM models (one file per entity)
-├── schemas/                 # Pydantic request/response schemas
-├── repositories/            # Data-access layer (raw DB operations)
-├── services/                 # Business logic layer (validation, 404s, FK checks)
-└── routers/                  # FastAPI route definitions (one router per entity)
+├── main.py
+├── database.py
+├── core/              # Security and authentication
+├── models/            # SQLAlchemy models
+├── schemas/           # Pydantic schemas
+├── repositories/      # Database operations
+├── services/          # Business logic
+└── routers/            # API endpoints
 ```
 
-Each entity follows the same layered pattern: **router → service → repository → model**. Routers only depend on services; services own all business rules (not-found handling, foreign key validation, conflict handling on delete); repositories only talk to the database.
+The application follows:
+
+**Router → Service → Repository → Model**
 
 ## Setup
 
@@ -53,49 +58,45 @@ Each entity follows the same layered pattern: **router → service → repositor
 
 ```bash
 python3 -m venv venv
-source venv/bin/activate      # on Windows: venv\Scripts\activate
+source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. Set up PostgreSQL
+### 2. Configure PostgreSQL
 
-Create a database matching the connection string in `app/database.py`:
-
-```bash
-createdb -h localhost -U postgres pos_db
-```
-
-## Configuration
-
-Create a `.env` file in the project root with:
+Create a PostgreSQL database and add your connection details to `.env`:
 
 ```env
 DATABASE_URL=postgresql+psycopg2://username:password@localhost:5432/your_database_name
+SECRET_KEY=your-secret-key
 ```
 
-### 3. Run the app
+### 3. Run the API
 
 ```bash
 cd app
 fastapi dev main.py
 ```
 
-Tables are created automatically on startup via `Base.metadata.create_all`.
+Tables are created automatically when the application starts.
 
-### 4. Explore the API
+### 4. Swagger Documentation
 
-Open **http://127.0.0.1:8000/docs** for the Swagger UI, where every entity supports:
+Open:
 
-- `POST   /entity/`        — create a record
-- `GET    /entity/`        — list all records
-- `GET    /entity/{id}`    — retrieve a single record
-- `PUT    /entity/{id}`    — update a record
-- `DELETE /entity/{id}`    — delete a record
+**[http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)**
 
-Available resources: `/categories`, `/suppliers`, `/products`, `/customers`, `/users`, `/sales`, `/sale-items`, `/payments`, `/receipts`.
+Authentication is available through:
+
+* `POST /auth/register` — create an account
+* `POST /auth/login` — obtain a JWT access token
+* `GET /auth/me` — view the authenticated user
+
+Click **Authorize** in Swagger and enter the credentials to test protected endpoints.
 
 ## Error Handling
 
-- **404 Not Found** — requesting, updating, or deleting a record that doesn't exist, or creating/updating a record with a foreign key that points at a nonexistent row (e.g. a sale item referencing a product that isn't in the database)
-- **409 Conflict** — attempting to delete a record that's still referenced by other records (e.g. deleting a product that appears in an existing sale item)
-- **422 Unprocessable Entity** — request body fails Pydantic validation (missing required fields, wrong types, etc.)
+* **404** — resource or referenced foreign key does not exist
+* **409** — resource cannot be deleted because it is referenced elsewhere
+* **401** — authentication credentials are missing or invalid
+* **422** — request data fails validation

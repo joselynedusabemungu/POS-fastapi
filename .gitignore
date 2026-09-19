@@ -10,3 +10,6 @@ pycache/
 *.pyc
 *.pyo
 .Python
+env/
+__pycache__/
+.pytest_cache/

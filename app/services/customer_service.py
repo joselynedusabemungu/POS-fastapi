@@ -15,12 +15,27 @@ def list_customer(db: Session):
     return customer_repository.get_all(db)
 
 def create_customer(db:Session, customer:CustomerCreate):
-    return customer_repository.create(db, customer.model_dump())
+    try:
+        return customer_repository.create(db, customer.model_dump())
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail="Customer email already exists",
+        )
 
 def update_customer(db: Session, customer_id: int, customer: CustomerUpdate):
     retrieved_customer = get_customer(db, customer_id)
-    updated_customer = customer_repository.update(db, retrieved_customer, customer.model_dump(exclude_unset=True))
-    return updated_customer
+    try:
+        return customer_repository.update(
+            db, retrieved_customer, customer.model_dump(exclude_unset=True)
+        )
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail="Customer email already exists",
+        )
 
 def delete_customer(db: Session, customer_id: int):
     deleted_customer = get_customer(db, customer_id)

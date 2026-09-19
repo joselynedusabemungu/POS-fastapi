@@ -23,14 +23,27 @@ def list_receipt(db: Session):
 def create_receipt(db: Session, receipt: ReceiptCreate):
     data = receipt.model_dump()
     _validate_foreign_keys(db, data)
-    return receipt_repository.create(db, data)
+    try:
+        return receipt_repository.create(db, data)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail="Receipt number or sale already exists",
+        )
 
 def update_receipt(db: Session, receipt_id: int, receipt: ReceiptUpdate):
     retrieved_receipt = get_receipt(db, receipt_id)
     data = receipt.model_dump(exclude_unset=True)
     _validate_foreign_keys(db, data)
-    updated_receipt = receipt_repository.update(db, retrieved_receipt, data)
-    return updated_receipt
+    try:
+        return receipt_repository.update(db, retrieved_receipt, data)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail="Receipt number or sale already exists",
+        )
 
 def delete_receipt(db: Session, receipt_id: int):
     deleted_receipt = get_receipt(db, receipt_id)

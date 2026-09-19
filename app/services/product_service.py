@@ -27,14 +27,27 @@ def list_product(db: Session):
 def create_product(db: Session, product: ProductCreate):
     data = product.model_dump()
     _validate_foreign_keys(db, data)
-    return product_repository.create(db, data)
+    try:
+        return product_repository.create(db, data)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail="Product SKU already exists",
+        )
 
 def update_product(db: Session, product_id: int, product: ProductUpdate):
     retrieved_product = get_product(db, product_id)
     data = product.model_dump(exclude_unset=True)
     _validate_foreign_keys(db, data)
-    updated_product = product_repository.update(db, retrieved_product, data)
-    return updated_product
+    try:
+        return product_repository.update(db, retrieved_product, data)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail="Product SKU already exists",
+        )
 
 def delete_product(db: Session, product_id: int):
     deleted_product = get_product(db, product_id)

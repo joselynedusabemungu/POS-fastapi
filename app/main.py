@@ -18,3 +18,7 @@ app.include_router(sale.router)
 app.include_router(sale_item.router)
 app.include_router(supplier.router)
 app.include_router(user.router)
+
+@app.get("/")
+def root():
+    return {"message": "Welcome to the Point of Sale API"}

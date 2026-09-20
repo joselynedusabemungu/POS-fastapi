@@ -49,3 +49,35 @@ app/
 ├── services/          # Business logic
 ├── routers/           # API endpoints
 └── tests/             # Automated tests
+```
+
+## Testing
+
+The test suite runs against an isolated, in-memory **SQLite** instance to ensure complete separation from the development PostgreSQL database.
+
+### Running Tests Locally
+
+1. **Activate your environment and install dependencies**:
+   ```bash
+   source .env/bin/activate
+   pip install -r requirements.txt
+   ```
+
+2. **Initialize configuration**:
+   Ensure `pytest.ini` exists in the project root to map modules correctly:
+   ```bash
+   echo -e "[pytest]\npythonpath = ." > pytest.ini
+   ```
+
+3. **Execute the suite**:
+   ```bash
+   # Run all tests
+   pytest -v
+
+   # Run tests with python version anchoring (if systemic path issues occur)
+   python3.10 -m pytest -v
+   ```
+
+### Continuous Integration
+
+Automated tests are executed via **GitHub Actions** (`.github/workflows/test.yml`) on every `push` and `pull_request` targeting `main` or `master`. Merges are blocked if any test case fails.
